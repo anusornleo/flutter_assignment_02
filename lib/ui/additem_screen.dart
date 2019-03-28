@@ -17,22 +17,6 @@ class AddItemState extends State<AddItemScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("New Subject"),
-        bottom: TabBar(
-            tabs: <Widget>[
-              Tab(
-                icon: Icon(Icons.access_alarms),
-                text: "first",
-              ),
-              Tab(
-                icon: Icon(Icons.airline_seat_flat),
-                text: "Second",
-              ),
-              Tab(
-                icon: Icon(Icons.airplay),
-                text: "thrid",
-              )
-            ],
-          ),
       ),
       body: Padding(
         padding: EdgeInsets.all(18),
