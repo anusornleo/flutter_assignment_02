@@ -7,17 +7,17 @@ class Completed extends StatefulWidget {
 }
 
 class CompletedState extends State<Completed> {
-  List<Note> items = new List();
-  DatabaseHelper db = new DatabaseHelper();
-  bool isChecked = false;
+  List<Todo> items = new List(); // List to Show a data
+  TodoDatabase db = new TodoDatabase();
 
   @override
   void initState() {
     super.initState();
-    db.getAllComplete().then((notes) {
+    db.getAllComplete().then((todos) {
+      // restart read Data when it changed
       setState(() {
-        notes.forEach((note) {
-          items.add(Note.fromMap(note));
+        todos.forEach((note) {
+          items.add(Todo.fromMap(note));
         });
       });
     });
@@ -29,7 +29,7 @@ class CompletedState extends State<Completed> {
       return Scaffold(
           appBar: AppBar(
             title: Text('Todo'),
-            backgroundColor: Colors.blue,
+            // backgroundColor: Colors.blue,
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.delete),
@@ -47,7 +47,7 @@ class CompletedState extends State<Completed> {
       return Scaffold(
         appBar: AppBar(
           title: Text('Todo'),
-          backgroundColor: Colors.blue,
+          // backgroundColor: Colors.blue,
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.delete),
@@ -56,7 +56,10 @@ class CompletedState extends State<Completed> {
           ],
         ),
         body: Center(
-          child: ListView.builder(
+          child: ListView.separated(
+              separatorBuilder: (context, index) => Divider(
+                    color: Colors.black,
+                  ),
               itemCount: items.length,
               itemBuilder: (context, position) {
                 Map i = items[position].toMap();
@@ -69,16 +72,16 @@ class CompletedState extends State<Completed> {
                     value: i['done'] == 0 ? false : true,
                     onChanged: (bool value) {
                       setState(() {
-                        db.updateNote(Note.fromMap({
+                        db.updateNote(Todo.fromMap({
                           'id': i['id'],
                           'title': i['title'],
                           'done': false,
                         }));
-                        db.getAllComplete().then((notes) {
+                        db.getAllComplete().then((todos) {
                           setState(() {
                             items.clear();
-                            notes.forEach((note) {
-                              items.add(Note.fromMap(note));
+                            todos.forEach((note) {
+                              items.add(Todo.fromMap(note));
                             });
                           });
                         });
@@ -94,11 +97,12 @@ class CompletedState extends State<Completed> {
 
   void _deleteNote(BuildContext context) async {
     db.deleteAllDone();
-    db.getAllComplete().then((notes) {
+    db.getAllComplete().then((todos) {
+      // restart read Data when it changed
       setState(() {
         items.clear();
-        notes.forEach((note) {
-          items.add(Note.fromMap(note));
+        todos.forEach((note) {
+          items.add(Todo.fromMap(note));
         });
       });
     });

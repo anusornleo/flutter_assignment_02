@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_assignment_02/model/todo.dart';
 import 'package:flutter_assignment_02/ui/additem_screen.dart';
 
-class ListViewNote extends StatefulWidget {
+class Task extends StatefulWidget {
   @override
-  _ListViewNoteState createState() => new _ListViewNoteState();
+  TaskState createState() => new TaskState();
 }
 
-class _ListViewNoteState extends State<ListViewNote> {
-  List<Note> items = new List();
-  DatabaseHelper db = new DatabaseHelper();
-  bool isChecked = false;
+class TaskState extends State<Task> {
+  List<Todo> items = new List(); // List to Show a data
+  TodoDatabase db = new TodoDatabase();
 
   @override
   void initState() {
     super.initState();
 
-    db.getAllNotes().then((notes) {
+    db.getAllTask().then((todos) {
+      // restart read Data when it changed
       setState(() {
-        notes.forEach((note) {
-          items.add(Note.fromMap(note));
+        todos.forEach((note) {
+          items.add(Todo.fromMap(note));
         });
       });
     });
@@ -31,12 +31,10 @@ class _ListViewNoteState extends State<ListViewNote> {
       return Scaffold(
           appBar: AppBar(
             title: Text('Todo'),
-            backgroundColor: Colors.blue,
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.add),
                 onPressed: () => _createNewNote(context),
-                // onPressed: _airDress,
               ),
             ],
           ),
@@ -50,17 +48,18 @@ class _ListViewNoteState extends State<ListViewNote> {
       return Scaffold(
         appBar: AppBar(
           title: Text('Todo'),
-          backgroundColor: Colors.blue,
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () => _createNewNote(context),
-              // onPressed: _airDress,
             ),
           ],
         ),
         body: Center(
-          child: ListView.builder(
+          child: ListView.separated(
+              separatorBuilder: (context, index) => Divider(
+                    color: Colors.black,
+                  ),
               itemCount: items.length,
               itemBuilder: (context, position) {
                 Map i = items[position].toMap();
@@ -73,16 +72,17 @@ class _ListViewNoteState extends State<ListViewNote> {
                     value: i['done'] == 1 ? false : true,
                     onChanged: (bool value) {
                       setState(() {
-                        db.updateNote(Note.fromMap({
-                          'id': i['id'],
-                          'title': i['title'],
-                          'done': true,
+                        db.updateNote(Todo.fromMap({
+                          'id': i['id'], // old id
+                          'title': i['title'], // old title
+                          'done': true, // change data as TRUE
                         }));
-                        db.getAllNotes().then((notes) {
+                        db.getAllTask().then((todos) {
+                          // restart read Data when it changed
                           setState(() {
                             items.clear();
-                            notes.forEach((note) {
-                              items.add(Note.fromMap(note));
+                            todos.forEach((note) {
+                              items.add(Todo.fromMap(note));
                             });
                           });
                         });
@@ -96,47 +96,20 @@ class _ListViewNoteState extends State<ListViewNote> {
     }
   }
 
-  // void _deleteNote(BuildContext context, Note note, int position) async {
-  //   db.deleteNote(note.id).then((notes) {
-  //     setState(() {
-  //       items.removeAt(position);
-  //     });
-  //   });
-  // }
-
-  // void _navigateToNote(BuildContext context, Note note) async {
-  //   String result = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => NoteScreen(note)),
-  //   );
-
-  //   if (result == 'update') {
-  //     db.getAllNotes().then((notes) {
-  //       setState(() {
-  //         items.clear();
-  //         notes.forEach((note) {
-  //           items.add(Note.fromMap(note));
-  //         });
-  //       });
-  //     });
-  //   }
-  // }
-
   void _createNewNote(BuildContext context) async {
-    String result = await Navigator.push(
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => NoteScreen(Note.getValue(''))),
+      MaterialPageRoute(builder: (context) => NoteScreen(Todo.getValue(''))),
     );
 
-    if (result == 'save') {
-      db.getAllNotes().then((notes) {
-        setState(() {
-          items.clear();
-          notes.forEach((note) {
-            items.add(Note.fromMap(note));
-          });
+    db.getAllTask().then((todos) {
+      // restart read Data when it changed
+      setState(() {
+        items.clear();
+        todos.forEach((note) {
+          items.add(Todo.fromMap(note));
         });
       });
-    }
+    });
   }
 }
