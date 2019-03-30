@@ -21,7 +21,7 @@ class Todo {
   }
 
   Map<String, dynamic> toMap() {
-    // Map data between _title and _done as Map
+    // map data between _title and _done as Map
     Map<String, dynamic> map = {columnTitle: _title, columnDone: _done};
     if (_id != null) {
       map[columnId] = _id;

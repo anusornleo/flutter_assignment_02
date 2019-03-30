@@ -17,7 +17,6 @@ class _NoteScreenState extends State<NoteScreen> {
   @override
   void initState() {
     super.initState();
-
     _titleController = new TextEditingController(text: widget.todo.title);
   }
 

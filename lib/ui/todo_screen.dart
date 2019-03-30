@@ -17,7 +17,7 @@ class HomeState extends State<Home> {
   ];
   void onTab(int index) {
     setState(() {
-      _currentIndex = index;
+      _currentIndex = index; // swith index of page
     });
   }
 

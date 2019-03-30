@@ -29,7 +29,6 @@ class CompletedState extends State<Completed> {
       return Scaffold(
           appBar: AppBar(
             title: Text('Todo'),
-            // backgroundColor: Colors.blue,
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.delete),
@@ -47,7 +46,6 @@ class CompletedState extends State<Completed> {
       return Scaffold(
         appBar: AppBar(
           title: Text('Todo'),
-          // backgroundColor: Colors.blue,
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.delete),

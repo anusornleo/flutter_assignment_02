@@ -16,7 +16,7 @@ class TaskState extends State<Task> {
     super.initState();
 
     db.getAllTask().then((todos) {
-      // restart read Data when it changed
+      // restart read data when it changed
       setState(() {
         todos.forEach((note) {
           items.add(Todo.fromMap(note));
