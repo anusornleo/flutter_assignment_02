@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_assignment_02/model/todo.dart';
 import 'package:flutter_assignment_02/ui/completed_.dart';
 import 'package:flutter_assignment_02/ui/task.dart';
-import 'placeholder_widget.dart';
+
 
 class Home extends StatefulWidget {
   @override
@@ -14,7 +13,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int _currentIndex = 0;
   final List<Widget> _children = [
-    Task(),
+    ListViewNote(),
     Completed(),
     // PlaceholderWidget(Colors.deepOrange),
   ];

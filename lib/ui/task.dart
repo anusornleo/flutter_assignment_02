@@ -1,62 +1,142 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_assignment_02/model/todo.dart';
+import 'package:flutter_assignment_02/ui/additem_screen.dart';
 
-class Task extends StatefulWidget {
+class ListViewNote extends StatefulWidget {
   @override
-  TaskState createState() => TaskState();
-  
+  _ListViewNoteState createState() => new _ListViewNoteState();
 }
 
-class TaskState extends State<Task> {
-  TodoProvider todo = TodoProvider();
-  Map<String, bool> values = {};
+class _ListViewNoteState extends State<ListViewNote> {
+  List<Note> items = new List();
+  DatabaseHelper db = new DatabaseHelper();
+  bool isChecked = false;
 
-  showDataBase() async {
-    List data = await todo.getAll();
-    data.forEach((c) => values[c.toString()] = false);
-    // values[c.toString().split(',')[1]] = false;
-    print(values);
-    // print(data[0].toString().split(',')[1]);
-    print("Result of Get All");
+  @override
+  void initState() {
+    super.initState();
+
+    db.getAllNotes().then((notes) {
+      setState(() {
+        notes.forEach((note) {
+          items.add(Note.fromMap(note));
+        });
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    todo.open("todo.db");
-    showDataBase();
-    return new Scaffold(
-      appBar: AppBar(
-        title: Text('Todo'),
-        actions: <Widget>[
-          RaisedButton(
-            child: Text("Show All Database"),
-            onPressed: () async {
-              showDataBase();
-            },
+    if (items.length == 0) {
+      return Scaffold(
+          appBar: AppBar(
+            title: Text('Todo'),
+            backgroundColor: Colors.blue,
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () => _createNewNote(context),
+                // onPressed: _airDress,
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              Navigator.pushNamed(context, "/goAddItem");
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        children: values.keys.map((String key) {
-          return new CheckboxListTile(
-            title: new Text(key),
-            value: values[key],
-            onChanged: (bool value) {
-              setState(() {
-                values[key] = value;
-              });
-            },
-          );
-        }).toList(),
-      ),
+          body: Center(
+            child: new Text(
+              "No data found..",
+              textAlign: TextAlign.center,
+            ),
+          ));
+    } else {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Todo'),
+          backgroundColor: Colors.blue,
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () => _createNewNote(context),
+              // onPressed: _airDress,
+            ),
+          ],
+        ),
+        body: Center(
+          child: ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, position) {
+                Map i = items[position].toMap();
+                return ListTile(
+                  title: Text(i['title'],
+                      style: DefaultTextStyle.of(context)
+                          .style
+                          .apply(fontSizeFactor: 1.5)),
+                  trailing: Checkbox(
+                    value: i['done'] == 1 ? false : true,
+                    onChanged: (bool value) {
+                      setState(() {
+                        db.updateNote(Note.fromMap({
+                          'id': i['id'],
+                          'title': i['title'],
+                          'done': true,
+                        }));
+                        db.getAllNotes().then((notes) {
+                          setState(() {
+                            items.clear();
+                            notes.forEach((note) {
+                              items.add(Note.fromMap(note));
+                            });
+                          });
+                        });
+                      });
+                    },
+                  ),
+                );
+              }),
+        ),
+      );
+    }
+  }
+
+  // void _deleteNote(BuildContext context, Note note, int position) async {
+  //   db.deleteNote(note.id).then((notes) {
+  //     setState(() {
+  //       items.removeAt(position);
+  //     });
+  //   });
+  // }
+
+  // void _navigateToNote(BuildContext context, Note note) async {
+  //   String result = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => NoteScreen(note)),
+  //   );
+
+  //   if (result == 'update') {
+  //     db.getAllNotes().then((notes) {
+  //       setState(() {
+  //         items.clear();
+  //         notes.forEach((note) {
+  //           items.add(Note.fromMap(note));
+  //         });
+  //       });
+  //     });
+  //   }
+  // }
+
+  void _createNewNote(BuildContext context) async {
+    String result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => NoteScreen(Note.getValue(''))),
     );
-    
+
+    if (result == 'save') {
+      db.getAllNotes().then((notes) {
+        setState(() {
+          items.clear();
+          notes.forEach((note) {
+            items.add(Note.fromMap(note));
+          });
+        });
+      });
+    }
   }
 }
-

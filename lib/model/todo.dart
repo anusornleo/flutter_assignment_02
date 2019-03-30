@@ -1,99 +1,189 @@
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
-final String tableTodo = "todo";
-final String columnId = "_id";
-final String columnTitle = "title";
-final String columnDone = "done";
+final String tableNote = 'noteTable';
+final String columnId = 'id';
+final String columnTitle = 'title';
+final String columnDone = 'done';
 
-class Todo {
-  int id;
-  String title;
-  bool done;
+class Note {
+  int _id;
+  String _title;
+  int _done;
 
-  Todo();
+  Note();
 
-  Todo.formMap(Map<String, dynamic> map) {
-    this.id = map["_id"];
-    this.title = map[columnTitle];
-    this.done = map[columnDone] == 1;
+  Note.fromMap(Map<String, dynamic> map) {
+    print("map['done'].runtimeType");
+    print(map['done'].runtimeType);
+    this._id = map['id'];
+    this._title = map['title'];
+    this._done = map['done'] == false ? 0 : 1;
   }
 
+  // Map<String, dynamic> toMap() {
+
+  //   var map = new Map<String, dynamic>();
+  //   if (_id != null) {
+  //     map['id'] = _id;
+  //   }
+  //   map['title'] = _title;
+  //   map['done'] = _done == true ? 1 : 0;
+
+  //   return map;
+  // }
   Map<String, dynamic> toMap() {
+    print("_done");
+    print(_done.runtimeType);
     Map<String, dynamic> map = {
-      columnTitle: title,
-      columnDone: done == true ? 1 : 0
+      columnTitle: _title,
+      columnDone: _done
     };
 
-    if (id != null) {
-      map[columnId] = id;
+    if (_id != null) {
+      map[columnId] = _id;
     }
     return map;
   }
+
+  Note.getValue(title){
+    this._title = title;
+    this._done = 0;
+  }
+
+  Note.map(dynamic obj) {
+    this._id = obj['id'];
+    this._title = obj['title'];
+    this._done = obj['done'];
+  }
+
+  int get id => _id;
+  String get title => _title;
+  // String get description => _done;
+  int get done => _done;
+
 }
 
-class TodoProvider {
-  Database db;
+class DatabaseHelper {
+  static final DatabaseHelper _instance = new DatabaseHelper.internal();
 
-  Future open(String path) async {
-    db = await openDatabase(path, version: 1,
-        onCreate: (Database db, int version) async {
-      await db.execute('''
-        create table $tableTodo (
-          $columnId integer primary key autoincrement,
-          $columnTitle text not null,
-          $columnDone integer not null
-        )
-        ''');
-    });
-    print("Open Database");
-  }
+  factory DatabaseHelper() => _instance;
 
-  Future<Todo> insert(Todo todo) async {
-    todo.id = await db.insert(tableTodo, todo.toMap());
-    return todo;
-  }
+  static Database _db;
 
-  Future<Todo> getTodo(int id) async {
-    List<Map<String, dynamic>> map = await db.query(
-      tableTodo,
-      columns: [columnId, columnTitle, columnDone],
-      where: '$columnId = ?',
-      whereArgs: [id],
-    );
-    if (map.length > 0) {
-      return new Todo.formMap(map.first);
-    } else {
-      return null;
+  DatabaseHelper.internal();
+
+  Future<Database> get db async {
+    if (_db != null) {
+      return _db;
     }
+    _db = await initDb();
+
+    return _db;
   }
 
-  Future<List> getAll() async {
-    List<Map<String, dynamic>> map = await db.query(
-      tableTodo,
-      columns: [columnId, columnTitle, columnDone],
-      where: '$columnTitle = ?',
-      whereArgs: ['test'],
-    );
-    if (map.length > 0) {
-      return map;
-    } else {
-      return null;
+  initDb() async {
+    String databasesPath = await getDatabasesPath();
+    String path = join(databasesPath, 'notes.db');
+
+//    await deleteDatabase(path); // just for testing
+
+    var db = await openDatabase(path, version: 1, onCreate: _onCreate);
+    return db;
+  }
+
+  void _onCreate(Database db, int newVersion) async {
+    await db.execute(
+        'CREATE TABLE $tableNote($columnId INTEGER PRIMARY KEY, $columnTitle TEXT, $columnDone TEXT)');
+  }
+
+  Future<int> saveNote(Note note) async {
+    var dbClient = await db;
+    var result = await dbClient.insert(tableNote, note.toMap());
+//    var result = await dbClient.rawInsert(
+//        'INSERT INTO $tableNote ($columnTitle, $columnDescription) VALUES (\'${note.title}\', \'${note.description}\')');
+
+    return result;
+  }
+
+  Future<int> saveDone(Note note) async {
+    var dbClient = await db;
+    var result = await dbClient.insert(tableNote, note.toMap());
+//    var result = await dbClient.rawInsert(
+//        'INSERT INTO $tableNote ($columnTitle, $columnDescription) VALUES (\'${note.title}\', \'${note.description}\')');
+
+    return result;
+  }
+
+  Future<List> getAllNotes() async {
+    var dbClient = await db;
+    // var result = await dbClient.query(tableNote, columns: [columnId, columnTitle, columnDescription]);
+    List<Map> result = await dbClient.query(tableNote,
+        columns: [columnId, columnTitle, columnDone],
+        // where: '$columnDescription = ?', // when des = 0
+        where: '$columnDone = ?', // show all
+        whereArgs: [0]);
+    return result;
+  }
+
+  Future<List> getAllComplete() async {
+    var dbClient = await db;
+    // var result = await dbClient.query(tableNote, columns: [columnId, columnTitle, columnDescription]);
+    List<Map> result = await dbClient.query(tableNote,
+        columns: [columnId, columnTitle, columnDone],
+        // where: '$columnDescription = ?', // when des = 0
+        where: '$columnDone = ?', // show all
+        whereArgs: [1]);
+    // print(result.last);
+    return result;
+  }
+
+  Future<int> getCount() async {
+    var dbClient = await db;
+    return Sqflite.firstIntValue(
+        await dbClient.rawQuery('SELECT COUNT(*) FROM $tableNote'));
+  }
+
+  Future<Note> getNote(int id) async {
+    var dbClient = await db;
+    List<Map> result = await dbClient.query(tableNote,
+        columns: [columnId, columnTitle, columnDone],
+        where: '$columnId = ?',
+        whereArgs: [id]);
+
+    if (result.length > 0) {
+      return new Note.fromMap(result.first);
     }
+
+    return null;
   }
 
-  Future<int> delete(int id) async {
-    return db.delete(tableTodo, where: '$columnId = ?', whereArgs: [id]);
+  Future<int> deleteNote(int id) async {
+    var dbClient = await db;
+    return await dbClient
+        .delete(tableNote, where: '$columnId = ?', whereArgs: [id]);
+//    return await dbClient.rawDelete('DELETE FROM $tableNote WHERE $columnId = $id');
   }
 
-  Future<int> update(Todo todo) async {
-    return await db.update(tableTodo, todo.toMap(),
-        where: '$columnId = ?', whereArgs: [todo.id]);
+  Future<int> deleteAllDone() async {
+    var dbClient = await db;
+    return await dbClient
+        .delete(tableNote, where: '$columnDone = ?', whereArgs: [1]);
+//    return await dbClient.rawDelete('DELETE FROM $tableNote WHERE $columnId = $id');
   }
 
-  Future deleteAll() async {
-    db.delete("Todo", where: "$columnTitle = ?", whereArgs: ['test']);
+  Future<int> updateNote(Note note) async {
+    var dbClient = await db;
+    return await dbClient.update(tableNote, note.toMap(),
+        where: "$columnId = ?", whereArgs: [note.id]);
+    
+//    return await dbClient.rawUpdate(
+//        'UPDATE $tableNote SET $columnTitle = \'${note.title}\', $columnDescription = \'${note.description}\' WHERE $columnId = ${note.id}');
   }
 
-  Future close() async => db.close();
+  Future close() async {
+    var dbClient = await db;
+    return dbClient.close();
+  }
 }
