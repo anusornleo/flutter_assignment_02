@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-final String tableTodo = 'todoTable';
+final String tableTodo = 'todo';
 final String columnId = 'id';
 final String columnTitle = 'title';
 final String columnDone = 'done';
